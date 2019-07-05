@@ -11,7 +11,7 @@ governing permissions and limitations under the License.
 */
 
 const jwt = require('jsonwebtoken');
-const debug = require('debug')('@adobe/aio-cli-plugin-ims-jwt/login');
+const debug = require('debug')('@adobe/adobeio-cna-core-ims-jwt/login');
 
 // The ims-login hook for JWT is taking care of calling IMS
 // the function takes the
