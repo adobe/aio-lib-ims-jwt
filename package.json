@@ -1,9 +1,9 @@
 {
-  "name": "@adobe/aio-cna-core-ims-jwt",
-  "description": "JWT token creation plugin for @adobe/aio-cna-core-ims",
+  "name": "@adobe/adobeio-cna-core-ims-jwt",
+  "description": "JWT token creation plugin for @adobe/adobeio-cna-core-ims",
   "version": "0.0.0",
   "author": "Felix Meschberger @fmeschbe",
-  "bugs": "https://github.com/adobe/aio-cna-core-ims-jwt/issues",
+  "bugs": "https://github.com/adobe/adobeio-cna-core-ims-jwt/issues",
   "dependencies": {
     "jsonwebtoken": "^8.3.0"
   },
@@ -17,10 +17,10 @@
   "files": [
     "/src"
   ],
-  "homepage": "https://github.com/adobe/aio-cna-core-ims-jwt",
+  "homepage": "https://github.com/adobe/adobeio-cna-core-ims-jwt",
   "license": "Apache-2.0",
   "main": "./src/ims-jwt.js",
-  "repository": "https://github.com/adobe/aio-cna-core-ims-jwt",
+  "repository": "https://github.com/adobe/adobeio-cna-core-ims-jwt",
   "scripts": {
     "posttest": "eslint .",
     "test": "echo NO TESTS",
