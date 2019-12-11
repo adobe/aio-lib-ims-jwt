@@ -4,7 +4,7 @@ JWT token creation plugin for [`aio-lib-core-ims`](https://github.com/adobe/aio-
 
 [![Version](https://img.shields.io/npm/v/@adobe/aio-lib-core-ims-jwt.svg)](https://npmjs.org/package/@adobe/aio-lib-core-ims-jwt)
 [![Downloads/week](https://img.shields.io/npm/dw/@adobe/aio-lib-core-ims-jwt.svg)](https://npmjs.org/package/@adobe/aio-lib-core-ims-jwt)
-[![License](https://img.shields.io/npm/l/@adobe/aio-lib-core-ims-jwt.svg)](https://github.com/adobe/aio-lib-core-ims-jwt/blob/master/package.json)
+[![License](https://img.shields.io/npm/l/@adobe/aio-lib-core-ims-jwt.svg)](https://github.com/adobe/aio-lib-core-ims-jwt/blob/master/package.json) [![Greenkeeper badge](https://badges.greenkeeper.io/adobe/aio-lib-core-ims-jwt.svg)](https://greenkeeper.io/)
 
 This package does not have functionality on its own.
 Please refer to [`aio-lib-core-ims`](https://github.com/adobe/aio-lib-core-ims) for information on this plugin.
