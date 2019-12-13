@@ -20,7 +20,10 @@
     "eslint-plugin-node": "^10.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "globby": "^10.0.1"
+    "globby": "^10.0.1",
+    "jest": "^24",
+    "jest-junit": "^10.0.0",
+    "stdout-stderr": "^0.1.9"
   },
   "engines": {
     "node": ">=8.0.0"
@@ -34,7 +37,8 @@
   "repository": "https://github.com/adobe/aio-lib-core-ims-jwt",
   "scripts": {
     "pretest": "eslint .",
-    "test": "echo NO TESTS",
+    "test": "npm run unit-tests",
+    "unit-tests": "jest --config test/jest.config.js ---ci -w=2",
     "version": "git add README.md"
   }
 }
