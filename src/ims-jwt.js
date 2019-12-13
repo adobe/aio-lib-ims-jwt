@@ -87,7 +87,8 @@ async function createJwt (ims, clientId, imsOrg, techacct, metaScopes, privateKe
 
 async function imsLogin (ims, config) {
   return canSupport(config)
-    .then(() => createJwt(ims, config.client_id, config.ims_org_id, config.techacct, config.meta_scopes, config.private_key))
+    // note config.passphrase is optional
+    .then(() => createJwt(ims, config.client_id, config.ims_org_id, config.techacct, config.meta_scopes, config.private_key, config.passphrase))
     .then(jwtToken => ims.exchangeJwtToken(config.client_id, config.client_secret, jwtToken))
 }
 
