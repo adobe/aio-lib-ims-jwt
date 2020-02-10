@@ -16,7 +16,9 @@ const debug = require('debug')('@adobe/aio-lib-core-ims-jwt')
 /**
  * Convert a string value to Json. Returns the original string if it fails.
  *
+ * @private
  * @param {string} value the value to attempt conversion to Json
+ * @returns {object|string} the converted json, or the original string
  */
 function parseJson (value) {
   try {
@@ -26,17 +28,19 @@ function parseJson (value) {
   }
 }
 
+/**
+ * Create a jwt token.
+ *
+ * @private
+ * @param {object} ims the Ims object
+ * @param {string} clientId The client ID assigned to the integration
+ * @param {string} imsOrg The IMS Org ID of the customer
+ * @param {string} techacct The Technical Account field of the integration
+ * @param {string|Array} metaScopes The secret associated to the client ID
+ * @param {string|Array} privateKey The private key associated with the integration
+ * @param {string} [passphrase] The passphrase for the private key
+ */
 async function createJwt (ims, clientId, imsOrg, techacct, metaScopes, privateKey, passphrase) {
-  // new mechanism: only JWT properties are in the configuration:
-  // configData: An object providing the properties required for JWT with properties:
-  //     imsOrg:        The IMS Org ID of the customer
-  //     techacct:      The Technical Account field of the integration
-  //     clientId:      The client ID assigned to the integration
-  //     clientSecret:  The secret associated to the client ID
-  //     metaScopes:    Array of IMS meta scope related to APIs integrated with
-  //     secret:        The secret key corresponding to the public key
-  //                    registered with the integration
-
   // Prepare a short lived JWT token to exchange for an access token
   const payload = {
     exp: Math.round(Date.now() / 1000 + 300), // 5 minutes expiry time
