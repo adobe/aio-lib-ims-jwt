@@ -11,7 +11,7 @@ governing permissions and limitations under the License.
 */
 
 const jwt = require('jsonwebtoken')
-const debug = require('debug')('@adobe/aio-lib-core-ims-jwt')
+const debug = require('debug')('@adobe/aio-lib-ims-jwt')
 
 /**
  * Convert a string value to Json. Returns the original string if it fails.

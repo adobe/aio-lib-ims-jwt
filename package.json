@@ -1,14 +1,14 @@
 {
-  "name": "@adobe/aio-lib-core-ims-jwt",
-  "description": "JWT token creation plugin for @adobe/aio-lib-core-ims",
+  "name": "@adobe/aio-lib-ims-jwt",
+  "description": "JWT token creation plugin for @adobe/aio-lib-ims",
   "version": "0.0.3",
   "author": "Adobe Inc.",
-  "bugs": "https://github.com/adobe/aio-lib-core-ims-jwt/issues",
+  "bugs": "https://github.com/adobe/aio-lib-ims-jwt/issues",
   "dependencies": {
     "jsonwebtoken": "^8.3.0"
   },
   "peerDependencies": {
-    "@adobe/aio-lib-core-ims": "^0.0.1"
+    "@adobe/aio-lib-ims": "^1.0.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-aio-lib-config": "^1.0.2",
@@ -32,10 +32,10 @@
   "files": [
     "/src"
   ],
-  "homepage": "https://github.com/adobe/aio-lib-core-ims-jwt",
+  "homepage": "https://github.com/adobe/aio-lib-ims-jwt",
   "license": "Apache-2.0",
   "main": "./src/ims-jwt.js",
-  "repository": "https://github.com/adobe/aio-lib-core-ims-jwt",
+  "repository": "https://github.com/adobe/aio-lib-ims-jwt",
   "scripts": {
     "pretest": "eslint .",
     "test": "npm run unit-tests",
