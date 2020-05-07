@@ -5,13 +5,14 @@
   "author": "Adobe Inc.",
   "bugs": "https://github.com/adobe/aio-lib-ims-jwt/issues",
   "dependencies": {
+    "debug": "^4.1.1",
     "jsonwebtoken": "^8.3.0"
   },
   "peerDependencies": {
     "@adobe/aio-lib-ims": "^2.0.0"
   },
   "devDependencies": {
-    "@adobe/eslint-config-aio-lib-config": "^1.0.2",
+    "@adobe/eslint-config-aio-lib-config": "^1.2.0",
     "codecov": "^3.6.1",
     "eslint": "^6.7.2",
     "eslint-config-standard": "^14.1.0",
@@ -37,7 +38,8 @@
   "main": "./src/ims-jwt.js",
   "repository": "https://github.com/adobe/aio-lib-ims-jwt",
   "scripts": {
-    "pretest": "eslint .",
+    "lint": "eslint src test",
+    "pretest": "npm run lint",
     "test": "npm run unit-tests",
     "unit-tests": "jest --config test/jest.config.js ---ci -w=2",
     "version": "git add README.md"
