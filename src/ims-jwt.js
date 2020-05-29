@@ -63,7 +63,7 @@ async function canSupport (configData) {
 async function imsLogin (ims, config) {
   return canSupport(config)
     // note config.passphrase is optional
-    .then(() => createJwt(ims, config.client_id, config.ims_org_id, config.technical_account_email, config.meta_scopes, config.private_key, config.passphrase))
+    .then(() => createJwt(ims, config.client_id, config.ims_org_id, config.technical_account_id, config.meta_scopes, config.private_key, config.passphrase))
     .then(jwtToken => ims.exchangeJwtToken(config.client_id, config.client_secret, jwtToken))
 }
 
