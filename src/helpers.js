@@ -35,17 +35,18 @@ function parseJson (value) {
  * @param {object} ims the Ims object
  * @param {string} clientId The client ID assigned to the integration
  * @param {string} imsOrg The IMS Org ID of the customer
- * @param {string} techacct The Technical Account field of the integration
+ * @param {string} techacctEmail The Technical Account (Email) field of the integration
  * @param {string|Array} metaScopes The secret associated to the client ID
  * @param {string|Array} privateKey The private key associated with the integration
  * @param {string} [passphrase] The passphrase for the private key
+ * @returns {string} the jwt token
  */
-async function createJwt (ims, clientId, imsOrg, techacct, metaScopes, privateKey, passphrase) {
+async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, privateKey, passphrase) {
   // Prepare a short lived JWT token to exchange for an access token
   const payload = {
     exp: Math.round(Date.now() / 1000 + 300), // 5 minutes expiry time
     iss: imsOrg,
-    sub: techacct,
+    sub: techacctEmail,
     aud: ims.getApiUrl('/c/' + clientId)
   }
 

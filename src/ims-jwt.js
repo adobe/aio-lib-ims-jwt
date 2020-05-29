@@ -25,7 +25,7 @@ function configMissingKeys (configData) {
   }
 
   const missingKeys = []
-  const requiredKeys = ['client_id', 'client_secret', 'techacct', 'meta_scopes', 'ims_org_id', 'private_key']
+  const requiredKeys = ['client_id', 'client_secret', 'technical_account_email', 'technical_account_id', 'meta_scopes', 'ims_org_id', 'private_key']
 
   requiredKeys.forEach(key => {
     if (!configData[key]) {
@@ -63,7 +63,7 @@ async function canSupport (configData) {
 async function imsLogin (ims, config) {
   return canSupport(config)
     // note config.passphrase is optional
-    .then(() => createJwt(ims, config.client_id, config.ims_org_id, config.techacct, config.meta_scopes, config.private_key, config.passphrase))
+    .then(() => createJwt(ims, config.client_id, config.ims_org_id, config.technical_account_email, config.meta_scopes, config.private_key, config.passphrase))
     .then(jwtToken => ims.exchangeJwtToken(config.client_id, config.client_secret, jwtToken))
 }
 
