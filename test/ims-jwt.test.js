@@ -25,7 +25,8 @@ const gConfig = {
   client_id: 'my-client-id',
   client_secret: 'my-client-secret',
   ims_org_id: 'my-ims-org-id',
-  techacct: 'my-tech-acct',
+  technical_account_email: 'my-tech-acct-email',
+  technical_account_id: 'my-tech-acct-id',
   meta_scopes: 'my,meta,scopes',
   private_key: 'my-private-key'
 }
