@@ -20,8 +20,14 @@ const gIms = {
   getApiUrl: jest.fn()
 }
 
+jest.mock('fs', () => ({
+  readFile: jest.fn()
+}))
+const fs = require('fs')
+
 beforeEach(() => {
   jest.restoreAllMocks()
+  fs.readFile.mockReset()
 })
 
 test('parseJson', () => {
@@ -50,6 +56,7 @@ test('createJwt', async () => {
 
   const myPassphrase = 'my-passphrase'
   const privateKeyStringNewlines = 'my\nprivate\nkey'
+  const privateKeyFile = 'file:/my/private.key'
   const privateKeyStringifiedJson = '["my", "private", "key"]'
   const metaScopesStringifiedJson = '["my", "meta", "scopes"]'
 
@@ -80,10 +87,22 @@ test('createJwt', async () => {
   jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, metaScopesStringifiedJson, privateKeyStringifiedJson)
   await expect(jwtObject).resolves.toEqual(myJwtToken)
 
+  // config with private_key as file
+  fs.readFile.mockImplementation((a, cb) => cb(null, Buffer.from('my private key')))
+  jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, myConfig.meta_scopes, privateKeyFile)
+  await expect(jwtObject).resolves.toEqual(myJwtToken)
+  await expect(fs.readFile).toHaveBeenCalledWith('/my/private.key', expect.any(Function))
+
+  // config with private_key as file and error reading it
+  fs.readFile.mockReset()
+  fs.readFile.mockImplementation((a, cb) => cb(new Error('fake')))
+  jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, myConfig.meta_scopes, privateKeyFile)
+  await expect(jwtObject).rejects.toThrow('fake')
+
   // mock jwt.sign throwing an error
   jwt.sign.mockImplementation(() => {
     throw new Error('sign error')
   })
   jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, myConfig.meta_scopes, myConfig.private_key, myConfig.passphrase)
-  await expect(jwtObject).rejects.toEqual(new Error('A passphrase is needed for your private-key. Use the --passphrase flag to specify one.'))
+  await expect(jwtObject).rejects.toEqual(new Error('Cannot sign the JWT, the private key or the passphrase is invalid'))
 })

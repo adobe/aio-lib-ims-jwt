@@ -12,6 +12,9 @@ governing permissions and limitations under the License.
 
 const jwt = require('jsonwebtoken')
 const debug = require('debug')('@adobe/aio-lib-ims-jwt')
+const fs = require('fs') // need promise
+
+const FILE_PREFIX = 'file:'
 
 /**
  * Convert a string value to Json. Returns the original string if it fails.
@@ -26,6 +29,35 @@ function parseJson (value) {
   } catch (e) {
     return value
   }
+}
+
+/**
+ * Return false or file name given input string, depending on the `file:` prefix. For
+ * example: `getFile('file:abc')` will return `abc` while `getFile(abc)` returns `false`.
+ *
+ * @param {string|any} str the input string
+ * @returns {boolean|string} the returned value
+ */
+function getFile (str) {
+  return typeof str === 'string' && str.startsWith(FILE_PREFIX) && str.substr(FILE_PREFIX.length)
+}
+
+/**
+ * Reads a file from path and returns a promise resolving to the string content.
+ *
+ * @param {string} file path to the file
+ * @returns {Promise<string>} resolves to the file content string
+ */
+function readFileString (file) {
+  // make it a promise, avoid unnecessary dependencies
+  return new Promise((resolve, reject) => {
+    fs.readFile(file, (err, data) => {
+      if (err) {
+        return reject(err)
+      }
+      return resolve(data.toString())
+    })
+  })
 }
 
 /**
@@ -56,6 +88,10 @@ async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, priv
     payload[ims.getApiUrl('/s/' + metaScope)] = true
   }
 
+  const privateKeyFile = getFile(privateKey)
+  if (privateKeyFile) {
+    privateKey = await readFileString(privateKeyFile)
+  }
   privateKey = parseJson(privateKey)
   let keyParam = (typeof (privateKey) === 'string') ? privateKey : privateKey.join('\n')
   if (passphrase) {
@@ -73,7 +109,7 @@ async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, priv
   } catch (err) {
     debug('JWT signing failed: %s', err.message)
     debug(err.stack)
-    throw new Error('A passphrase is needed for your private-key. Use the --passphrase flag to specify one.')
+    throw new Error('Cannot sign the JWT, the private key or the passphrase is invalid')
   }
 }
 
