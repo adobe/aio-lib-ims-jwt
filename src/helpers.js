@@ -12,9 +12,7 @@ governing permissions and limitations under the License.
 
 const jwt = require('jsonwebtoken')
 const debug = require('debug')('@adobe/aio-lib-ims-jwt')
-const fs = require('fs') // need promise
-
-const FILE_PREFIX = 'file:'
+const fs = require('fs') // need promises
 
 /**
  * Convert a string value to Json. Returns the original string if it fails.
@@ -32,14 +30,16 @@ function parseJson (value) {
 }
 
 /**
- * Return false or file name given input string, depending on the `file:` prefix. For
- * example: `getFile('file:abc')` will return `abc` while `getFile(abc)` returns `false`.
+ * Checks that the input string or array starts with the private key prefix.
  *
- * @param {string|any} str the input string
- * @returns {boolean|string} the returned value
+ * @param {string|Array<string>} key the input key
+ * @returns {boolean} the returned value
+ * @private
  */
-function getFile (str) {
-  return typeof str === 'string' && str.startsWith(FILE_PREFIX) && str.substr(FILE_PREFIX.length)
+function isPrivateKey (key) {
+  const PREFIX = '-----BEGIN PRIVATE KEY-----'
+  return (typeof key === 'string' && key.startsWith(PREFIX)) ||
+          (Array.isArray(key) && key[0] === PREFIX)
 }
 
 /**
@@ -47,6 +47,7 @@ function getFile (str) {
  *
  * @param {string} file path to the file
  * @returns {Promise<string>} resolves to the file content string
+ * @private
  */
 function readFileString (file) {
   // make it a promise, avoid unnecessary dependencies
@@ -68,10 +69,10 @@ function readFileString (file) {
  * @param {string} clientId The client ID assigned to the integration
  * @param {string} imsOrg The IMS Org ID of the customer
  * @param {string} techacctEmail The Technical Account (Email) field of the integration
- * @param {string|Array} metaScopes The secret associated to the client ID
- * @param {string|Array} privateKey The private key associated with the integration
+ * @param {string} metaScopes The secret associated to the client ID
+ * @param {string} privateKey The private key associated with the integration
  * @param {string} [passphrase] The passphrase for the private key
- * @returns {string} the jwt token
+ * @returns {Promise<string>} the jwt token
  */
 async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, privateKey, passphrase) {
   // Prepare a short lived JWT token to exchange for an access token
@@ -88,15 +89,21 @@ async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, priv
     payload[ims.getApiUrl('/s/' + metaScope)] = true
   }
 
-  const privateKeyFile = getFile(privateKey)
-  if (privateKeyFile) {
-    privateKey = await readFileString(privateKeyFile)
+  const parsedPrivateKey = parseJson(privateKey)
+  let keyParam
+  if (isPrivateKey(parsedPrivateKey)) {
+    keyParam = (typeof (parsedPrivateKey) === 'string') ? parsedPrivateKey : parsedPrivateKey.join('\n')
+  } else {
+    // attempt to read file from string
+    keyParam = await readFileString(privateKey)
+    if (!isPrivateKey(keyParam)) {
+      throw new Error(`content of file '${privateKey}' is not a valid private key`)
+    }
   }
-  privateKey = parseJson(privateKey)
-  let keyParam = (typeof (privateKey) === 'string') ? privateKey : privateKey.join('\n')
+
   if (passphrase) {
     keyParam = {
-      key: privateKey,
+      key: keyParam,
       passphrase
     }
   }

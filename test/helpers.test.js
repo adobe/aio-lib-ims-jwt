@@ -51,13 +51,13 @@ test('createJwt', async () => {
     ims_org_id: 'my-ims-org-id',
     techacct: 'my-tech-acct',
     meta_scopes: ['my', 'meta', 'scopes'],
-    private_key: ['my', 'private', 'key']
+    private_key: ['-----BEGIN PRIVATE KEY-----', 'my', 'private', 'key']
   }
 
   const myPassphrase = 'my-passphrase'
-  const privateKeyStringNewlines = 'my\nprivate\nkey'
-  const privateKeyFile = 'file:/my/private.key'
-  const privateKeyStringifiedJson = '["my", "private", "key"]'
+  const privateKeyStringNewlines = '-----BEGIN PRIVATE KEY-----\nmy\nprivate\nkey'
+  const privateKeyFile = '/my/private.key'
+  const privateKeyStringifiedJson = '["-----BEGIN PRIVATE KEY-----", "my", "private", "key"]'
   const metaScopesStringifiedJson = '["my", "meta", "scopes"]'
 
   jwt.sign.mockImplementation(() => {
@@ -88,10 +88,16 @@ test('createJwt', async () => {
   await expect(jwtObject).resolves.toEqual(myJwtToken)
 
   // config with private_key as file
-  fs.readFile.mockImplementation((a, cb) => cb(null, Buffer.from('my private key')))
+  fs.readFile.mockImplementation((a, cb) => cb(null, Buffer.from(privateKeyStringNewlines)))
   jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, myConfig.meta_scopes, privateKeyFile)
   await expect(jwtObject).resolves.toEqual(myJwtToken)
-  await expect(fs.readFile).toHaveBeenCalledWith('/my/private.key', expect.any(Function))
+  expect(fs.readFile).toHaveBeenCalledWith('/my/private.key', expect.any(Function))
+
+  // config with private_key as file but invalid content
+  fs.readFile.mockReset()
+  fs.readFile.mockImplementation((a, cb) => cb(null, Buffer.from('-----NOT PRIVATE KEY-----\nmy private key')))
+  jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, myConfig.meta_scopes, privateKeyFile)
+  await expect(jwtObject).rejects.toThrow('content of file \'/my/private.key\' is not a valid private key')
 
   // config with private_key as file and error reading it
   fs.readFile.mockReset()
