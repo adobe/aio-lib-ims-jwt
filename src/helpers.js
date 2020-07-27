@@ -12,6 +12,7 @@ governing permissions and limitations under the License.
 
 const jwt = require('jsonwebtoken')
 const debug = require('debug')('@adobe/aio-lib-ims-jwt')
+const fs = require('fs') // need promises
 
 /**
  * Convert a string value to Json. Returns the original string if it fails.
@@ -29,6 +30,38 @@ function parseJson (value) {
 }
 
 /**
+ * Checks that the input string or array starts with the private key prefix.
+ *
+ * @param {string|Array<string>} key the input key
+ * @returns {boolean} the returned value
+ * @private
+ */
+function isPrivateKey (key) {
+  const PREFIX = '-----BEGIN'
+  return (typeof key === 'string' && key.startsWith(PREFIX)) ||
+          (Array.isArray(key) && key[0].startsWith(PREFIX))
+}
+
+/**
+ * Reads a file from path and returns a promise resolving to the string content.
+ *
+ * @param {string} file path to the file
+ * @returns {Promise<string>} resolves to the file content string
+ * @private
+ */
+function readFileString (file) {
+  // make it a promise, avoid unnecessary dependencies
+  return new Promise((resolve, reject) => {
+    fs.readFile(file, (err, data) => {
+      if (err) {
+        return reject(err)
+      }
+      return resolve(data.toString())
+    })
+  })
+}
+
+/**
  * Create a jwt token.
  *
  * @private
@@ -36,10 +69,10 @@ function parseJson (value) {
  * @param {string} clientId The client ID assigned to the integration
  * @param {string} imsOrg The IMS Org ID of the customer
  * @param {string} techacctEmail The Technical Account (Email) field of the integration
- * @param {string|Array} metaScopes The secret associated to the client ID
- * @param {string|Array} privateKey The private key associated with the integration
+ * @param {string} metaScopes The secret associated to the client ID
+ * @param {string} privateKey The private key associated with the integration
  * @param {string} [passphrase] The passphrase for the private key
- * @returns {string} the jwt token
+ * @returns {Promise<string>} the jwt token
  */
 async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, privateKey, passphrase) {
   // Prepare a short lived JWT token to exchange for an access token
@@ -56,11 +89,21 @@ async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, priv
     payload[ims.getApiUrl('/s/' + metaScope)] = true
   }
 
-  privateKey = parseJson(privateKey)
-  let keyParam = (typeof (privateKey) === 'string') ? privateKey : privateKey.join('\n')
+  const parsedPrivateKey = parseJson(privateKey)
+  let keyParam
+  if (isPrivateKey(parsedPrivateKey)) {
+    keyParam = (typeof (parsedPrivateKey) === 'string') ? parsedPrivateKey : parsedPrivateKey.join('\n')
+  } else {
+    // attempt to read file from string
+    keyParam = await readFileString(privateKey)
+    if (!isPrivateKey(keyParam)) {
+      throw new Error(`content of file '${privateKey}' is not a valid private key`)
+    }
+  }
+
   if (passphrase) {
     keyParam = {
-      key: privateKey,
+      key: keyParam,
       passphrase
     }
   }
@@ -73,7 +116,7 @@ async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, priv
   } catch (err) {
     debug('JWT signing failed: %s', err.message)
     debug(err.stack)
-    throw new Error('A passphrase is needed for your private-key. Use the --passphrase flag to specify one.')
+    throw new Error('Cannot sign the JWT, the private key or the passphrase is invalid')
   }
 }
 
