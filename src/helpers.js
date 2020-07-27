@@ -37,9 +37,9 @@ function parseJson (value) {
  * @private
  */
 function isPrivateKey (key) {
-  const PREFIX = '-----BEGIN PRIVATE KEY-----'
+  const PREFIX = '-----BEGIN'
   return (typeof key === 'string' && key.startsWith(PREFIX)) ||
-          (Array.isArray(key) && key[0] === PREFIX)
+          (Array.isArray(key) && key[0].startsWith(PREFIX))
 }
 
 /**
