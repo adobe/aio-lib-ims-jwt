@@ -11,7 +11,7 @@ governing permissions and limitations under the License.
 */
 
 const jwt = require('jsonwebtoken')
-const debug = require('debug')('@adobe/aio-lib-ims-jwt')
+const aioLogger = require('@adobe/aio-lib-core-logging')('@adobe/aio-lib-ims-jwt')
 const fs = require('fs') // need promises
 
 /**
@@ -111,11 +111,11 @@ async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, priv
   let jwtToken
   try {
     jwtToken = jwt.sign(payload, keyParam, { algorithm: 'RS256' }, null)
-    debug('Signed JWT token: %s', jwtToken)
+    aioLogger.debug('Signed JWT token: %s', jwtToken)
     return jwtToken
   } catch (err) {
-    debug('JWT signing failed: %s', err.message)
-    debug(err.stack)
+    aioLogger.debug('JWT signing failed: %s', err.message)
+    aioLogger.debug(err.stack)
     throw new Error('Cannot sign the JWT, the private key or the passphrase is invalid')
   }
 }
