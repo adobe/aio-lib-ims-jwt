@@ -25,7 +25,7 @@ function configMissingKeys (configData) {
   }
 
   const missingKeys = []
-  const requiredKeys = ['client_id', 'client_secret', 'technical_account_email', 'technical_account_id', 'meta_scopes', 'ims_org_id', 'private_key']
+  const requiredKeys = ['client_id', 'client_secret', 'technical_account_id', 'meta_scopes', 'ims_org_id', 'private_key']
 
   requiredKeys.forEach(key => {
     if (!configData[key]) {
