@@ -68,18 +68,18 @@ function readFileString (file) {
  * @param {object} ims the Ims object
  * @param {string} clientId The client ID assigned to the integration
  * @param {string} imsOrg The IMS Org ID of the customer
- * @param {string} techacctEmail The Technical Account (Email) field of the integration
+ * @param {string} techacctId The Technical Account Id field of the integration
  * @param {string} metaScopes The secret associated to the client ID
  * @param {string} privateKey The private key associated with the integration
  * @param {string} [passphrase] The passphrase for the private key
  * @returns {Promise<string>} the jwt token
  */
-async function createJwt (ims, clientId, imsOrg, techacctEmail, metaScopes, privateKey, passphrase) {
+async function createJwt (ims, clientId, imsOrg, techacctId, metaScopes, privateKey, passphrase) {
   // Prepare a short lived JWT token to exchange for an access token
   const payload = {
     exp: Math.round(Date.now() / 1000 + 300), // 5 minutes expiry time
     iss: imsOrg,
-    sub: techacctEmail,
+    sub: techacctId,
     aud: ims.getApiUrl('/c/' + clientId)
   }
 
