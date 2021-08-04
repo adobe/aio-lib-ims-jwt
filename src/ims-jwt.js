@@ -11,6 +11,7 @@ governing permissions and limitations under the License.
 */
 
 const { createJwt } = require('./helpers')
+const { codes: errors } = require('./errors')
 
 /**
  * Checks whether the configuration data is missing any required keys.
@@ -49,7 +50,7 @@ async function canSupport (configData) {
   if (missingKeys.length === 0) {
     return Promise.resolve(true)
   } else {
-    return Promise.reject(new Error(`JWT not supported due to some missing properties: ${missingKeys}`))
+    return Promise.reject(new errors.MISSING_PROPERTIES({ messageValues: missingKeys.join(',') }))
   }
 }
 

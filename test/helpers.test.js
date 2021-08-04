@@ -97,7 +97,7 @@ test('createJwt', async () => {
   fs.readFile.mockReset()
   fs.readFile.mockImplementation((a, cb) => cb(null, Buffer.from('-----NOT PRIVATE KEY-----\nmy private key')))
   jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, myConfig.meta_scopes, privateKeyFile)
-  await expect(jwtObject).rejects.toThrow('content of file \'/my/private.key\' is not a valid private key')
+  await expect(jwtObject).rejects.toThrow('[IMSJWTSDK:INVALID_KEY_FILE] content of file \'/my/private.key\' is not a valid private key')
 
   // config with private_key as file and error reading it
   fs.readFile.mockReset()
@@ -110,5 +110,5 @@ test('createJwt', async () => {
     throw new Error('sign error')
   })
   jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, myConfig.meta_scopes, myConfig.private_key, myConfig.passphrase)
-  await expect(jwtObject).rejects.toEqual(new Error('Cannot sign the JWT, the private key or the passphrase is invalid'))
+  await expect(jwtObject).rejects.toThrow('[IMSJWTSDK:INVALID_KEY] Cannot sign the JWT, the private key or the passphrase is invalid')
 })

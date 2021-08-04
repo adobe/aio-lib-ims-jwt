@@ -64,5 +64,5 @@ test('imsLogin() interface', async () => {
   // config missing a property
   const configMissingProperties = Object.assign({}, gConfig)
   delete configMissingProperties.client_id
-  await expect(plugin.imsLogin(gIms, configMissingProperties)).rejects.toEqual(new Error('JWT not supported due to some missing properties: client_id'))
+  await expect(plugin.imsLogin(gIms, configMissingProperties)).rejects.toThrow('[IMSJWTSDK:MISSING_PROPERTIES] JWT not supported due to some missing properties: client_id')
 })
