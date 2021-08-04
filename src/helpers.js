@@ -13,6 +13,7 @@ governing permissions and limitations under the License.
 const jwt = require('jsonwebtoken')
 const aioLogger = require('@adobe/aio-lib-core-logging')('@adobe/aio-lib-ims-jwt')
 const fs = require('fs') // need promises
+const { codes: errors } = require('./errors')
 
 /**
  * Convert a string value to Json. Returns the original string if it fails.
@@ -97,7 +98,7 @@ async function createJwt (ims, clientId, imsOrg, techacctId, metaScopes, private
     // attempt to read file from string
     keyParam = await readFileString(privateKey)
     if (!isPrivateKey(keyParam)) {
-      throw new Error(`content of file '${privateKey}' is not a valid private key`)
+      throw new errors.INVALID_KEY_FILE({ messageValues: privateKey })
     }
   }
 
@@ -116,7 +117,7 @@ async function createJwt (ims, clientId, imsOrg, techacctId, metaScopes, private
   } catch (err) {
     aioLogger.debug('JWT signing failed: %s', err.message)
     aioLogger.debug(err.stack)
-    throw new Error('Cannot sign the JWT, the private key or the passphrase is invalid')
+    throw new errors.INVALID_KEY()
   }
 }
 
