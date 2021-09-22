@@ -4,7 +4,7 @@ JWT token creation plugin for [`aio-lib-ims`](https://github.com/adobe/aio-lib-i
 
 [![Version](https://img.shields.io/npm/v/@adobe/aio-lib-ims-jwt.svg)](https://npmjs.org/package/@adobe/aio-lib-ims-jwt)
 [![Downloads/week](https://img.shields.io/npm/dw/@adobe/aio-lib-ims-jwt.svg)](https://npmjs.org/package/@adobe/aio-lib-ims-jwt)
-[![Build Status](https://travis-ci.com/adobe/aio-lib-ims-jwt.svg?branch=master)](https://travis-ci.com/adobe/aio-lib-ims-jwt)
+[![Node.js CI](https://github.com/adobe/aio-lib-ims-jwt/actions/workflows/node.js.yml/badge.svg)](https://github.com/adobe/aio-lib-ims-jwt/actions/workflows/node.js.yml)
 [![Codecov Coverage](https://img.shields.io/codecov/c/github/adobe/aio-lib-ims-jwt/master.svg?style=flat-square)](https://codecov.io/gh/adobe/aio-lib-ims-jwt/)
 [![License](https://img.shields.io/npm/l/@adobe/aio-lib-ims-jwt.svg)](https://github.com/adobe/aio-lib-ims-jwt/blob/master/package.json)
 
