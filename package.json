@@ -7,7 +7,7 @@
   "dependencies": {
     "@adobe/aio-lib-core-errors": "^3.0.1",
     "@adobe/aio-lib-core-logging": "^1.1.1",
-    "jsonwebtoken": "^8.3.0"
+    "jsonwebtoken": "^8.5.1"
   },
   "peerDependencies": {
     "@adobe/aio-lib-ims": "^4.0.0"

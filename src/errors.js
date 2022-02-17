@@ -45,5 +45,6 @@ module.exports = {
 
 // Define your error codes with the wrapper
 E('INVALID_KEY', 'Cannot sign the JWT, the private key or the passphrase is invalid')
+E('INVALID_TOKEN', 'Cannot validate the provided token')
 E('INVALID_KEY_FILE', 'content of file \'%s\' is not a valid private key')
 E('MISSING_PROPERTIES', 'JWT not supported due to some missing properties: %s')

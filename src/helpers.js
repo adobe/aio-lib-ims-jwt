@@ -14,7 +14,11 @@ const jwt = require('jsonwebtoken')
 const aioLogger = require('@adobe/aio-lib-core-logging')('@adobe/aio-lib-ims-jwt')
 const fs = require('fs') // need promises
 const { codes: errors } = require('./errors')
+const https = require('https')
+const path = require('path')
+const os = require('os')
 
+const CONFIG_PATH = path.join(os.homedir(), '.config')
 /**
  * Convert a string value to Json. Returns the original string if it fails.
  *
@@ -60,6 +64,64 @@ function readFileString (file) {
       return resolve(data.toString())
     })
   })
+}
+/**
+ * Read a cached cert when available or get a new one.
+ * @private
+ * @param {string} env IMS environment type
+ * @param {string} certName certificate that can be used to verify the signature
+ * @returns {Buffer | Promise<Buffer>} cert
+ */
+async function _readOrGetCert (env, certName) {
+  try {
+    return fs.readFileSync(path.join(CONFIG_PATH, certName))
+  } catch (e) {
+    if (env && certName) {
+      const URL = `https://static.adobelogin.com/keys/${env}/${certName}`
+      return new Promise((resolve, reject) => {
+        aioLogger.debug('No cached certificate found, grab new one.')
+        https.get(URL, (res) => {
+          let data = ''
+          res.on('data', (chunk) => {
+            data += chunk
+          })
+          res.on('end', () => {
+            if (isPrivateKey(data)) {
+              fs.writeFileSync(path.join(CONFIG_PATH, certName), data)
+              resolve(data)
+            } else {
+              reject(new Error('invalid cert'))
+            }
+          })
+        })
+      })
+    }
+    return Promise.reject(new Error())
+  }
+}
+
+/**
+ * Validates provided token using an IMS public key cert.
+ *
+ * @param {string} token Jwt token you want to validate. It validates only the access_token type.
+ * @returns {Promise<void>} The jwt token if valid
+ */
+async function verifyJwt (token) {
+  try {
+    const decoded = jwt.decode(token, { complete: true })
+    const { x5u: certName } = decoded.header
+    const { state, type } = decoded.payload
+    if (type === 'access_token') {
+      const { env } = JSON.parse(state)
+      const cert = await _readOrGetCert(env, certName)
+      jwt.verify(token, cert, { algorithms: ['RS256'] })
+      aioLogger.debug('The token was validated')
+    }
+  } catch (err) {
+    console.log('err', err)
+    aioLogger.debug('While validating token, error caught: %s', err)
+    throw new errors.INVALID_TOKEN()
+  }
 }
 
 /**
@@ -123,5 +185,6 @@ async function createJwt (ims, clientId, imsOrg, techacctId, metaScopes, private
 
 module.exports = {
   parseJson,
-  createJwt
+  createJwt,
+  verifyJwt
 }

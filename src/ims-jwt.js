@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-const { createJwt } = require('./helpers')
+const { createJwt, verifyJwt } = require('./helpers')
 const { codes: errors } = require('./errors')
 
 /**
@@ -71,5 +71,6 @@ async function imsLogin (ims, config) {
 module.exports = {
   canSupport,
   supports: canSupportSync,
-  imsLogin
+  imsLogin,
+  verifyJwt
 }

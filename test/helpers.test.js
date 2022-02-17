@@ -10,10 +10,19 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-const { parseJson, createJwt } = require('../src/helpers')
-const jwt = require('jsonwebtoken')
+const { parseJson, createJwt, verifyJwt } = require('../src/helpers')
 
-jest.mock('jsonwebtoken')
+const jwt = require('jsonwebtoken')
+jest.mock('jsonwebtoken', () => ({
+  decode: jest.fn(),
+  verify: jest.fn(),
+  sign: jest.fn()
+}))
+
+const https = require('https')
+jest.mock('https', () => ({
+  get: jest.fn()
+}))
 
 const gIms = {
   exchangeJwtToken: jest.fn(),
@@ -21,14 +30,33 @@ const gIms = {
 }
 
 jest.mock('fs', () => ({
-  readFile: jest.fn()
+  readFile: jest.fn(),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn()
 }))
 const fs = require('fs')
 
 beforeEach(() => {
   jest.restoreAllMocks()
   fs.readFile.mockReset()
+  fs.readFileSync.mockReset()
+  fs.writeFileSync.mockReset()
+  jwt.verify.mockReset()
+  jwt.decode.mockReset()
+  jwt.sign.mockReset()
+  https.get.mockReset()
 })
+
+const mockGetRes = {
+  on: jest.fn().mockImplementation((event, cb) => {
+    if (event === 'data') {
+      cb()
+    }
+    if (event === 'end') {
+      cb()
+    }
+  })
+}
 
 test('parseJson', () => {
   const myString = 'some-string'
@@ -111,4 +139,125 @@ test('createJwt', async () => {
   })
   jwtObject = createJwt(gIms, myConfig.clientId, myConfig.imsOrg, myConfig.techacct, myConfig.meta_scopes, myConfig.private_key, myConfig.passphrase)
   await expect(jwtObject).rejects.toThrow('[IMSJWTSDK:INVALID_KEY] Cannot sign the JWT, the private key or the passphrase is invalid')
+})
+
+describe('verifyJwt', () => {
+  test('verifyJwt, cached cert, jwt.verify called', async () => {
+    const privateKey = '-----BEGIN PRIVATE KEY-----'
+    const myAccessToken = 'my-access-token'
+    jwt.verify.mockImplementation(() => true)
+    jwt.decode.mockImplementation(() => ({
+      header: { x5u: 'myCertName' },
+      payload: { type: 'access_token', state: '{"env": "prod"}' }
+    }))
+    fs.readFileSync.mockImplementation(() => privateKey)
+    await verifyJwt(myAccessToken)
+    expect(jwt.verify).toHaveBeenCalledWith(myAccessToken, privateKey, { algorithms: ['RS256'] })
+    expect(verifyJwt).not.toThrow()
+  })
+  test('verifyJwt, get new cert, valid cert,', async () => {
+    const privateKey = '-----BEGIN PRIVATE KEY-----'
+    const myAccessToken = 'my-access-token'
+    const decodedToken = {
+      header: { x5u: 'myCertName' },
+      payload: { type: 'access_token', state: '{"env": "prod"}' }
+    }
+    jwt.decode = jest.fn().mockImplementation(() => decodedToken)
+    jwt.verify = jest.fn().mockImplementation(() => true)
+    fs.writeFileSync.mockImplementation(() => true)
+    fs.readFileSync.mockImplementation(() => { throw new Error() })
+    const mockGetRes = {
+      on: jest.fn().mockImplementation((event, cb) => {
+        if (event === 'data') {
+          cb(privateKey)
+        }
+        if (event === 'end') {
+          cb()
+        }
+      })
+    }
+    https.get.mockImplementation((option, cb) => {
+      cb(mockGetRes)
+    })
+    await expect(verifyJwt(myAccessToken)).resolves.not.toThrow()
+    expect(fs.writeFileSync).toHaveBeenCalledWith(expect.any(String), privateKey)
+    expect(jwt.verify).toHaveBeenCalledWith(myAccessToken, privateKey, { algorithms: ['RS256'] })
+  })
+  test('verifyJwt, get new cert, invalid response,', async () => {
+    const privateKey = '-----BEGIN PRIVATE KEY-----'
+    const myAccessToken = 'my-access-token'
+    https.get.mockImplementation((option, cb) => {
+      cb(mockGetRes)
+    })
+    jwt.decode.mockImplementation(() => ({
+      header: { x5u: 'myCertName' },
+      payload: { type: 'access_token', state: '{"env": "prod"}' }
+    }))
+    jwt.verify.mockImplementation(() => true)
+    fs.readFileSync.mockImplementation(() => {
+      throw new Error()
+    })
+    await expect(verifyJwt(myAccessToken)).rejects.toThrow()
+    expect(jwt.verify).not.toHaveBeenCalledWith(myAccessToken, privateKey, { algorithms: ['RS256'] })
+  })
+  test('verifyJwt, get new cert, reject on error,', async () => {
+    const privateKey = '-----BEGIN PRIVATE KEY-----'
+    const myAccessToken = 'my-access-token'
+    const mockGetRes = {
+      on: jest.fn().mockImplementation((event, cb) => {
+        if (event === 'data') {
+          cb()
+        }
+        if (event === 'end') {
+          cb()
+        }
+        if (event === 'error') {
+          cb(new Error('failed'))
+        }
+      })
+    }
+    https.get.mockImplementation((option, cb) => {
+      cb(mockGetRes)
+    })
+    jwt.decode.mockImplementation(() => ({
+      header: { x5u: 'myCertName' },
+      payload: { type: 'access_token', state: '{"env": "prod"}' }
+    }))
+    jwt.verify.mockImplementation(() => true)
+    fs.readFileSync.mockImplementation(() => {
+      throw new Error()
+    })
+    await expect(verifyJwt(myAccessToken)).rejects.toThrow()
+    expect(jwt.verify).not.toHaveBeenCalledWith(myAccessToken, privateKey, { algorithms: ['RS256'] })
+  })
+  test('verifyJwt, _readOrGetCert invalid params, reject,', async () => {
+    jwt.decode.mockImplementation(() => ({
+      header: { x5u: '' },
+      payload: { type: 'access_token', state: '{"env": ""}' }
+    }))
+    jwt.verify.mockImplementation(() => true)
+    fs.readFileSync.mockImplementation(() => {
+      throw new Error()
+    })
+    await expect(verifyJwt('token')).rejects.toThrow()
+    expect(jwt.verify).not.toHaveBeenCalled()
+  })
+  test('verifyJwt, not access token, skip verify,', async () => {
+    jwt.decode.mockImplementation(() => ({
+      header: { x5u: '' },
+      payload: { type: 'not_access', state: '{"env": ""}' }
+    }))
+    jwt.verify.mockImplementation(() => true)
+    fs.readFileSync.mockImplementation(() => {
+      throw new Error()
+    })
+    await expect(verifyJwt('token')).resolves.not.toThrow()
+    expect(jwt.verify).not.toHaveBeenCalled()
+  })
+  test('verifyJwt, throw with invalid key', async () => {
+    const privateKey = ''
+    const myAccessToken = 'my-access-token'
+    fs.readFileSync.mockImplementation(() => privateKey)
+    await expect(verifyJwt(myAccessToken)).rejects.toThrow()
+  })
 })
