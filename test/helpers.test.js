@@ -12,7 +12,6 @@ governing permissions and limitations under the License.
 
 const { parseJson, createJwt, verifyJwt } = require('../src/helpers')
 const jwt = require('jsonwebtoken')
-jest.mock('@adobe/aio-lib-env')
 const mockExponentialBackoff = jest.fn()
 jest.mock('@adobe/aio-lib-core-networking', () => ({
   HttpExponentialBackoff: jest.fn().mockImplementationOnce(() => ({
