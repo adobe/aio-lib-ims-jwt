@@ -12,13 +12,14 @@ governing permissions and limitations under the License.
 
 const jwt = require('jsonwebtoken')
 const aioLogger = require('@adobe/aio-lib-core-logging')('@adobe/aio-lib-ims-jwt')
+const { HttpExponentialBackoff } = require('@adobe/aio-lib-core-networking')
 const fs = require('fs') // need promises
 const { codes: errors } = require('./errors')
-const https = require('https')
 const path = require('path')
 const os = require('os')
 
 const CONFIG_PATH = path.join(os.homedir(), '.config')
+
 /**
  * Convert a string value to Json. Returns the original string if it fails.
  *
@@ -65,39 +66,46 @@ function readFileString (file) {
     })
   })
 }
+
 /**
- * Read a cached cert when available or get a new one.
+ * Load local private key
+ * @private
+ * @param certName name of the private key
+ * @returns {Buffer| undefined} privateKey
+ */
+function loadPrivateKey (certName) {
+  if (certName) {
+    const certLocation = path.join(CONFIG_PATH, certName)
+    if (fs.existsSync(certLocation)) {
+      aioLogger.debug('Private key loaded from: %s', certLocation)
+      return fs.readFileSync(path.join(CONFIG_PATH, certName))
+    }
+  }
+}
+/**
+ * Fetch new private key.
  * @private
  * @param {string} env IMS environment type
- * @param {string} certName certificate that can be used to verify the signature
- * @returns {Buffer | Promise<Buffer>} cert
+ * @param {string} certName Certificate name that can be used to verify the signature
+ * @returns {Promise<string>} privateKey
  */
-async function _readOrGetCert (env, certName) {
-  try {
-    return fs.readFileSync(path.join(CONFIG_PATH, certName))
-  } catch (e) {
-    if (env && certName) {
-      const URL = `https://static.adobelogin.com/keys/${env}/${certName}`
-      return new Promise((resolve, reject) => {
-        aioLogger.debug('No cached certificate found, grab new one.')
-        https.get(URL, (res) => {
-          let data = ''
-          res.on('data', (chunk) => {
-            data += chunk
-          })
-          res.on('end', () => {
-            if (isPrivateKey(data)) {
-              fs.writeFileSync(path.join(CONFIG_PATH, certName), data)
-              resolve(data)
-            } else {
-              reject(new Error('invalid cert'))
-            }
-          })
-        })
-      })
+async function getPrivateKey (env, certName) {
+  if (env && certName) {
+    const URL = `https://static.adobelogin.com/keys/${env}/${certName}`
+    const certLocation = path.join(CONFIG_PATH, certName)
+    aioLogger.debug('Fetching a new private key...')
+    const fetchRetry = new HttpExponentialBackoff()
+    const res = await fetchRetry.exponentialBackoff(URL, {})
+    const data = await res.text()
+    /* istanbul ignore else */
+    if (isPrivateKey(data)) {
+      fs.writeFileSync(certLocation, data)
+      aioLogger.debug('Private key saved at: %s', certLocation)
+      return data
     }
-    return Promise.reject(new Error())
   }
+  aioLogger.debug('Invalid params %s, %s', env, certName)
+  return Promise.reject(new Error('Invalid params.'))
 }
 
 /**
@@ -113,13 +121,12 @@ async function verifyJwt (token) {
     const { state, type } = decoded.payload
     if (type === 'access_token') {
       const { env } = JSON.parse(state)
-      const cert = await _readOrGetCert(env, certName)
+      const cert = loadPrivateKey(certName) || await getPrivateKey(env, certName)
       jwt.verify(token, cert, { algorithms: ['RS256'] })
-      aioLogger.debug('The token was validated')
+      aioLogger.debug('Access token is valid')
     }
   } catch (err) {
-    console.log('err', err)
-    aioLogger.debug('While validating token, error caught: %s', err)
+    aioLogger.debug('Error while validating token: %s', err)
     throw new errors.INVALID_TOKEN()
   }
 }
