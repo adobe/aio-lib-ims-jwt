@@ -112,7 +112,7 @@ async function getPrivateKey (env, certName) {
  * Validates provided token using an IMS public key cert.
  *
  * @param {string} token Jwt token you want to validate. It validates only the access_token type.
- * @returns {Promise<void>} The jwt token if valid
+ * @returns {Promise<void>} Will throw if token is invalid
  */
 async function verifyJwt (token) {
   try {
