@@ -9,6 +9,9 @@
     "@adobe/aio-lib-core-logging": "^3",
     "jsonwebtoken": "^9.0.0"
   },
+  "peerDependencies": {
+    "@adobe/aio-lib-ims": "^7"
+  },  
   "devDependencies": {
     "@adobe/eslint-config-aio-lib-config": "^2.0.1",
     "eslint": "^8.47.0",
