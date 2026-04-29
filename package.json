@@ -10,7 +10,7 @@
     "jsonwebtoken": "^9.0.0"
   },
   "peerDependencies": {
-    "@adobe/aio-lib-ims": "^8"
+    "@adobe/aio-lib-ims": "^8.1.2"
   },
   "devDependencies": {
     "@adobe/eslint-config-aio-lib-config": "^5.0.0",
